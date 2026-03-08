@@ -19,9 +19,9 @@ import java.util.List;
 
 public class EmployeeManagementFrame extends JFrame {
     private static final String EMPLOYEE_CSV_PATH =
-        "MO-IT03-feature-mphcr03-console-csv" + File.separator
-        + "data" + File.separator
-        + "MotorPH Employee Record.csv";
+        "oop-group23-ms2" + File.separator +
+        "data" + File.separator +
+        "MotorPH Employee Record.csv";
 
     private final EmployeeRepository repo;
     private final JTable table;
