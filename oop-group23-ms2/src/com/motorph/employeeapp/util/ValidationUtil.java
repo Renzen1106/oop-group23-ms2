@@ -40,7 +40,7 @@ public class ValidationUtil {
 
     public static boolean isValidPhone(String phone) {
         if (phone == null || phone.isBlank()) return false;
-        return phone.trim().matches("\\d{9}");
+        return phone.trim().matches("^(09\\d{9}|\\+639\\d{9})$");  
     }
 
     public static boolean isValidAddress(String address) {

@@ -1,11 +1,11 @@
-# 🚀 MotorPH Payroll System – OOP Implementation (MS2)
+#  MotorPH Payroll System – OOP Terminal Assessment
 
 **Course:** MO-IT03  
 **Group:** 23  
 
 ---
 
-## 📌 Project Overview
+##  Project Overview
 
 The **MotorPH Employee Management System** is a Java-based application designed to manage employee records and compute payroll information.
 
@@ -20,7 +20,7 @@ The application uses **Java Swing** to provide a graphical user interface and fo
 
 ---
 
-## ✨ Features
+##  Features
 
 1. **View Employee Records**  
    Display employee information in a table.
@@ -42,7 +42,7 @@ The application uses **Java Swing** to provide a graphical user interface and fo
 
 ---
 
-## 📂 Project Structure
+##  Project Structure
 
 The project follows a **layered architecture** for better organization and maintainability.
 
