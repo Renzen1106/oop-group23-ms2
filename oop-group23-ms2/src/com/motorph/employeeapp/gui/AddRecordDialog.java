@@ -1,22 +1,32 @@
 package com.motorph.employeeapp.gui;
 
-import com.motorph.employeeapp.model.Employee;
-import com.motorph.employeeapp.model.ProbationaryEmployee;
-import com.motorph.employeeapp.model.RegularEmployee;
-import com.motorph.employeeapp.repository.EmployeeRepository;
-import com.motorph.employeeapp.util.ValidationUtil;
-
-import javax.swing.*;
-import java.awt.*;
+import java.awt.BorderLayout;
+import java.awt.Frame;
+import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
-import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
+
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.JSpinner;
+import javax.swing.JTextField;
+import javax.swing.SpinnerDateModel;
+
+import com.motorph.employeeapp.model.Employee;
+import com.motorph.employeeapp.model.ProbationaryEmployee;
+import com.motorph.employeeapp.model.RegularEmployee;
+import com.motorph.employeeapp.repository.EmployeeRepository;
+import com.motorph.employeeapp.util.ValidationUtil;
 
 public class AddRecordDialog extends JDialog {
 

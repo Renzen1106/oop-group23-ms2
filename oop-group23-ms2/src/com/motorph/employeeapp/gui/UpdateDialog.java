@@ -2,8 +2,7 @@ package com.motorph.employeeapp.gui;
 
 import com.motorph.employeeapp.model.Employee;
 import com.motorph.employeeapp.repository.EmployeeRepository;
-
-import javax.swing.*;
+import com.motorph.employeeapp.util.ValidationUtil;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.math.BigDecimal;
@@ -12,13 +11,13 @@ import java.time.LocalDate;
 import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
+import javax.swing.*;
 
 public class UpdateDialog extends JDialog {
     private final EmployeeRepository repo;
     private final Employee employee;
     private final Runnable onUpdate;
 
-    // form fields
     private final JTextField idField = new JTextField(10);
     private final JTextField lastNameField = new JTextField(15);
     private final JTextField firstNameField = new JTextField(15);
@@ -29,8 +28,7 @@ public class UpdateDialog extends JDialog {
     private final JTextField philHealthField = new JTextField(12);
     private final JTextField tinField = new JTextField(12);
     private final JTextField pagIbigField = new JTextField(12);
-    private final JComboBox<String> statusField =
-            new JComboBox<>(new String[]{"Regular", "Probationary"});
+    private final JComboBox<String> statusField = new JComboBox<>(new String[]{"Regular", "Probationary"});
     private final JTextField positionField = new JTextField(15);
     private final JTextField supervisorField = new JTextField(15);
     private final JTextField basicSalaryField = new JTextField(10);
@@ -64,7 +62,6 @@ public class UpdateDialog extends JDialog {
         GridBagConstraints c = new GridBagConstraints();
         c.insets = new Insets(4, 4, 4, 4);
         c.anchor = GridBagConstraints.WEST;
-
         c.weightx = 1.0;
         c.fill = GridBagConstraints.HORIZONTAL;
 
@@ -100,11 +97,13 @@ public class UpdateDialog extends JDialog {
 
         idField.setEditable(false);
 
-        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton saveBtn = new JButton("Update");
         JButton closeBtn = new JButton("Close");
+
         saveBtn.addActionListener(this::onSave);
         closeBtn.addActionListener(e -> dispose());
+
+        JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttons.add(saveBtn);
         buttons.add(closeBtn);
 
@@ -137,13 +136,35 @@ public class UpdateDialog extends JDialog {
 
     private void onSave(ActionEvent ev) {
         try {
-            if (lastNameField.getText().trim().isEmpty()
-                    || firstNameField.getText().trim().isEmpty()
-                    || birthdaySpinner.getValue() == null
-                    || sssField.getText().trim().isEmpty()) {
-                throw new IllegalArgumentException(
-                        "Last Name, First Name, Birthday, and SSS # are required.");
-            }
+            if (!ValidationUtil.isValidName(lastNameField.getText()))
+                throw new IllegalArgumentException("Last Name invalid: letters, spaces, hyphens only.");
+            if (!ValidationUtil.isValidName(firstNameField.getText()))
+                throw new IllegalArgumentException("First Name invalid: letters, spaces, hyphens only.");
+            if (!ValidationUtil.isValidAddress(addressField.getText()))
+                throw new IllegalArgumentException("Address invalid.");
+            if (!ValidationUtil.isValidPhone(phoneField.getText()))
+                throw new IllegalArgumentException("Phone must be 9-digit Philippine landline.");
+            if (!ValidationUtil.isValidSSS(sssField.getText()))
+                throw new IllegalArgumentException("Invalid SSS format. Example: 12-3456789-0");
+            if (!ValidationUtil.isValidPhilHealth(philHealthField.getText()))
+                throw new IllegalArgumentException("Invalid PhilHealth format. Example: 123456789123");
+            if (!ValidationUtil.isValidTIN(tinField.getText()))
+                throw new IllegalArgumentException("Invalid TIN format. Example: 123-456-789-000");
+            if (!ValidationUtil.isValidPagibig(pagIbigField.getText()))
+                throw new IllegalArgumentException("Invalid Pag-IBIG format. Example: 123456789123");
+            if (!ValidationUtil.isValidStatus(statusField.getSelectedItem().toString()))
+                throw new IllegalArgumentException("Status must be 'Regular' or 'Probationary'.");
+            if (!ValidationUtil.isValidPosition(positionField.getText()))
+                throw new IllegalArgumentException("Position invalid: letters and spaces only.");
+            if (!ValidationUtil.isValidSupervisor(supervisorField.getText()))
+                throw new IllegalArgumentException("Supervisor invalid: letters and spaces only.");
+            if (!ValidationUtil.isNumeric(basicSalaryField.getText()) ||
+                !ValidationUtil.isNumeric(riceSubsidyField.getText()) ||
+                !ValidationUtil.isNumeric(phoneAllowanceField.getText()) ||
+                !ValidationUtil.isNumeric(clothingAllowanceField.getText()) ||
+                !ValidationUtil.isNumeric(semiMonthlyRateField.getText()) ||
+                !ValidationUtil.isNumeric(hourlyRateField.getText()))
+                throw new IllegalArgumentException("Salary and allowances must be numeric.");
 
             Date dt = (Date) birthdaySpinner.getValue();
             LocalDate bday = Instant.ofEpochMilli(dt.getTime())
@@ -180,9 +201,7 @@ public class UpdateDialog extends JDialog {
 
             JOptionPane.showMessageDialog(this, "Record Updated!");
             dispose();
-            if (onUpdate != null) {
-                onUpdate.run();
-            }
+            if (onUpdate != null) onUpdate.run();
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(
@@ -195,9 +214,7 @@ public class UpdateDialog extends JDialog {
     }
 
     private BigDecimal parseDecimal(String txt) {
-        if (txt == null || txt.isBlank()) {
-            return BigDecimal.ZERO;
-        }
+        if (txt == null || txt.isBlank()) return BigDecimal.ZERO;
         return new BigDecimal(txt);
     }
 }
