@@ -1,11 +1,25 @@
 package com.motorph.employeeapp.gui;
 
+import java.awt.BorderLayout;
+import java.awt.Color;
+import java.awt.Frame;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
+import java.awt.Insets;
+import java.io.File;
+
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
+import javax.swing.JDialog;
+import javax.swing.JLabel;
+import javax.swing.JOptionPane;
+import javax.swing.JPanel;
+import javax.swing.JPasswordField;
+import javax.swing.JTextField;
+
 import com.motorph.employeeapp.model.UserAccount;
 import com.motorph.employeeapp.repository.UserAccountDAO;
 import com.motorph.employeeapp.service.LoginService;
-
-import javax.swing.*;
-import java.awt.*;
 
 public class LoginDialog extends JDialog {
 
@@ -19,19 +33,42 @@ public class LoginDialog extends JDialog {
     public LoginDialog(Frame parent) {
         super(parent, "Login", true);
 
-        UserAccountDAO userAccountDAO = new UserAccountDAO("data/account.csv");
-        this.loginService = new LoginService(userAccountDAO);
+        String path = resolveAccountFilePath();
+        UserAccountDAO dao = new UserAccountDAO(path);
+        this.loginService = new LoginService(dao);
 
-        JPanel panel = new JPanel(new GridLayout(2, 2, 5, 5));
+        JPanel panel = new JPanel(new GridBagLayout());
+        GridBagConstraints cs = new GridBagConstraints();
 
-        panel.add(new JLabel("Username:"));
-        tfUsername = new JTextField();
-        panel.add(tfUsername);
+        cs.fill = GridBagConstraints.HORIZONTAL;
+        cs.insets = new Insets(5, 5, 5, 5); // spacing fix
 
-        panel.add(new JLabel("Password:"));
-        pfPassword = new JPasswordField();
-        panel.add(pfPassword);
+        // USERNAME
+        cs.gridx = 0;
+        cs.gridy = 0;
+        panel.add(new JLabel("Username:"), cs);
 
+        tfUsername = new JTextField(20);
+        cs.gridx = 1;
+        cs.gridy = 0;
+        cs.gridwidth = 2;
+        panel.add(tfUsername, cs);
+
+        // PASSWORD
+        cs.gridx = 0;
+        cs.gridy = 1;
+        cs.gridwidth = 1;
+        panel.add(new JLabel("Password:"), cs);
+
+        pfPassword = new JPasswordField(20);
+        cs.gridx = 1;
+        cs.gridy = 1;
+        cs.gridwidth = 2;
+        panel.add(pfPassword, cs);
+
+        panel.setBorder(BorderFactory.createLineBorder(Color.GRAY));
+
+        // BUTTONS
         JButton btnLogin = new JButton("Login");
         JButton btnCancel = new JButton("Cancel");
 
@@ -41,14 +78,15 @@ public class LoginDialog extends JDialog {
             dispose();
         });
 
-        JPanel buttons = new JPanel();
-        buttons.add(btnLogin);
-        buttons.add(btnCancel);
+        JPanel bp = new JPanel();
+        bp.add(btnLogin);
+        bp.add(btnCancel);
 
         getContentPane().add(panel, BorderLayout.CENTER);
-        getContentPane().add(buttons, BorderLayout.SOUTH);
+        getContentPane().add(bp, BorderLayout.PAGE_END);
 
         pack();
+        setResizable(false);
         setLocationRelativeTo(parent);
     }
 
@@ -72,7 +110,7 @@ public class LoginDialog extends JDialog {
             JOptionPane.showMessageDialog(
                     this,
                     "Invalid username or password",
-                    "Login Error",
+                    "Login",
                     JOptionPane.ERROR_MESSAGE
             );
 
@@ -80,6 +118,20 @@ public class LoginDialog extends JDialog {
             pfPassword.setText("");
             succeeded = false;
         }
+    }
+
+    private String resolveAccountFilePath() {
+        String[] paths = {
+                "data/account.csv",
+                "oop-group23-ms2/data/account.csv"
+        };
+
+        for (String p : paths) {
+            File f = new File(p);
+            if (f.exists()) return p;
+        }
+
+        return "data/account.csv";
     }
 
     public String getUsername() {

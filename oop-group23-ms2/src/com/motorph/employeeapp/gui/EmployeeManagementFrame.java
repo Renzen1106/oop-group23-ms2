@@ -21,10 +21,7 @@ import java.util.List;
 
 public class EmployeeManagementFrame extends JFrame {
 
-    private static final String EMPLOYEE_CSV_PATH =
-            "oop-group23-ms2" + File.separator +
-            "data" + File.separator +
-            "MotorPH Employee Record.csv";
+    private static final String EMPLOYEE_CSV_PATH = resolveEmployeeCsvPath();
 
     private final EmployeeRepository repo;
     private final UserAccount loggedInUser;
@@ -399,6 +396,22 @@ public class EmployeeManagementFrame extends JFrame {
                 "Unauthorized Access",
                 JOptionPane.WARNING_MESSAGE
         );
+    }
+
+    private static String resolveEmployeeCsvPath() {
+        String[] possiblePaths = {
+                "data/MotorPH Employee Record.csv",
+                "oop-group23-ms2/data/MotorPH Employee Record.csv"
+        };
+
+        for (String path : possiblePaths) {
+            File file = new File(path);
+            if (file.exists() && file.isFile()) {
+                return path;
+            }
+        }
+
+        return "data/MotorPH Employee Record.csv";
     }
 
     public static void main(String[] args) {
