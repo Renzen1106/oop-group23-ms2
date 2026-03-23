@@ -1,6 +1,8 @@
 package com.motorph.employeeapp.gui;
 
 import com.motorph.employeeapp.model.Employee;
+import com.motorph.employeeapp.model.Role;
+import com.motorph.employeeapp.model.UserAccount;
 import com.motorph.employeeapp.repository.CsvEmployeeRepository;
 import com.motorph.employeeapp.repository.EmployeeRepository;
 
@@ -18,18 +20,26 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class EmployeeManagementFrame extends JFrame {
+
     private static final String EMPLOYEE_CSV_PATH =
-        "oop-group23-ms2" + File.separator +
-        "data" + File.separator +
-        "MotorPH Employee Record.csv";
+            "oop-group23-ms2" + File.separator +
+            "data" + File.separator +
+            "MotorPH Employee Record.csv";
 
     private final EmployeeRepository repo;
+    private final UserAccount loggedInUser;
     private final JTable table;
     private final DefaultTableModel model;
 
-    public EmployeeManagementFrame(EmployeeRepository repo) {
+    private JButton addBtn;
+    private JButton updateBtn;
+    private JButton deleteBtn;
+    private JButton viewBtn;
+
+    public EmployeeManagementFrame(EmployeeRepository repo, UserAccount loggedInUser) {
         super("Employee Management");
         this.repo = repo;
+        this.loggedInUser = loggedInUser;
 
         try {
             UIManager.setLookAndFeel("javax.swing.plaf.nimbus.NimbusLookAndFeel");
@@ -120,10 +130,10 @@ public class EmployeeManagementFrame extends JFrame {
             }
         });
 
-        JButton addBtn = new JButton("Add Employee");
-        JButton updateBtn = new JButton("Update Employee");
-        JButton deleteBtn = new JButton("Delete Employee");
-        JButton viewBtn = new JButton("View Employee");
+        addBtn = new JButton("Add Employee");
+        updateBtn = new JButton("Update Employee");
+        deleteBtn = new JButton("Delete Employee");
+        viewBtn = new JButton("View Employee");
 
         List<JButton> btnsList = List.of(addBtn, updateBtn, deleteBtn, viewBtn);
         for (JButton b : btnsList) {
@@ -142,22 +152,27 @@ public class EmployeeManagementFrame extends JFrame {
         deleteBtn.setEnabled(false);
         viewBtn.setEnabled(false);
 
-        table.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> {
-            boolean selected = table.getSelectedRow() >= 0;
-            updateBtn.setEnabled(selected);
-            deleteBtn.setEnabled(selected);
-            viewBtn.setEnabled(selected);
+        table.getSelectionModel().addListSelectionListener((ListSelectionEvent e) -> updateButtonStates());
+
+        addBtn.addActionListener(e -> {
+            if (!canManageEmployees()) {
+                showAccessDenied("add employee records");
+                return;
+            }
+
+            new AddRecordDialog(
+                    EmployeeManagementFrame.this,
+                    repo,
+                    EmployeeManagementFrame.this::loadTable
+            ).setVisible(true);
         });
 
-        addBtn.addActionListener(e ->
-                new AddRecordDialog(
-                        EmployeeManagementFrame.this,
-                        repo,
-                        EmployeeManagementFrame.this::loadTable
-                ).setVisible(true)
-        );
-
         updateBtn.addActionListener(e -> {
+            if (!canManageEmployees()) {
+                showAccessDenied("update employee records");
+                return;
+            }
+
             int r = table.getSelectedRow();
             if (r < 0) {
                 return;
@@ -188,6 +203,11 @@ public class EmployeeManagementFrame extends JFrame {
         });
 
         deleteBtn.addActionListener(e -> {
+            if (!canManageEmployees()) {
+                showAccessDenied("delete employee records");
+                return;
+            }
+
             int r = table.getSelectedRow();
             if (r < 0) {
                 return;
@@ -228,6 +248,11 @@ public class EmployeeManagementFrame extends JFrame {
         });
 
         viewBtn.addActionListener(e -> {
+            if (!canViewPayslip()) {
+                showAccessDenied("view payroll and payslip information");
+                return;
+            }
+
             int r = table.getSelectedRow();
             if (r < 0) {
                 return;
@@ -264,8 +289,19 @@ public class EmployeeManagementFrame extends JFrame {
         side.add(Box.createVerticalStrut(8));
         side.add(viewBtn);
 
+        JLabel userInfoLabel = new JLabel(
+                "Logged in as: " + loggedInUser.getUsername() + " (" + loggedInUser.getRole() + ")"
+        );
+        userInfoLabel.setBorder(new EmptyBorder(8, 12, 8, 12));
+        userInfoLabel.setFont(userInfoLabel.getFont().deriveFont(Font.BOLD, 13f));
+
+        JPanel topPanel = new JPanel(new BorderLayout());
+        topPanel.setBackground(BG_WHITE);
+        topPanel.add(userInfoLabel, BorderLayout.WEST);
+
         getContentPane().setBackground(BG_WHITE);
         setLayout(new BorderLayout());
+        add(topPanel, BorderLayout.NORTH);
         add(side, BorderLayout.WEST);
         add(scroll, BorderLayout.CENTER);
 
@@ -274,6 +310,7 @@ public class EmployeeManagementFrame extends JFrame {
         setLocationRelativeTo(null);
 
         loadTable();
+        applyRolePermissions();
     }
 
     private void loadTable() {
@@ -316,116 +353,66 @@ public class EmployeeManagementFrame extends JFrame {
         }
     }
 
+    private void applyRolePermissions() {
+        Role role = loggedInUser.getRole();
+
+        switch (role) {
+            case HR:
+                addBtn.setEnabled(true);
+                break;
+            case IT:
+                addBtn.setEnabled(true);
+                break;
+            case FINANCE:
+                addBtn.setEnabled(false);
+                break;
+            default:
+                addBtn.setEnabled(false);
+                break;
+        }
+
+        updateButtonStates();
+    }
+
+    private void updateButtonStates() {
+        boolean selected = table.getSelectedRow() >= 0;
+
+        updateBtn.setEnabled(selected && canManageEmployees());
+        deleteBtn.setEnabled(selected && canManageEmployees());
+        viewBtn.setEnabled(selected && canViewPayslip());
+    }
+
+    private boolean canManageEmployees() {
+        Role role = loggedInUser.getRole();
+        return role == Role.HR || role == Role.IT;
+    }
+
+    private boolean canViewPayslip() {
+        Role role = loggedInUser.getRole();
+        return role == Role.HR || role == Role.FINANCE;
+    }
+
+    private void showAccessDenied(String action) {
+        JOptionPane.showMessageDialog(
+                this,
+                "Access denied. Your role does not have permission to " + action + ".",
+                "Unauthorized Access",
+                JOptionPane.WARNING_MESSAGE
+        );
+    }
+
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            boolean loginSuccess = showLoginDialog();
+            LoginDialog loginDialog = new LoginDialog(null);
+            loginDialog.setVisible(true);
 
-            if (!loginSuccess) {
+            if (!loginDialog.isSucceeded()) {
                 System.exit(0);
             }
 
+            UserAccount user = loginDialog.getAuthenticatedUser();
             EmployeeRepository repo = new CsvEmployeeRepository(EMPLOYEE_CSV_PATH);
-            new EmployeeManagementFrame(repo).setVisible(true);
+            new EmployeeManagementFrame(repo, user).setVisible(true);
         });
-    }
-
-    private static boolean showLoginDialog() {
-        JDialog loginDialog = new JDialog((Frame) null, "MotorPH Employee Management - Login", true);
-        loginDialog.setSize(520, 250);
-        loginDialog.setLocationRelativeTo(null);
-        loginDialog.setDefaultCloseOperation(JDialog.DISPOSE_ON_CLOSE);
-        loginDialog.setResizable(false);
-
-        JPanel mainPanel = new JPanel(new BorderLayout());
-        mainPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-
-        JLabel titleLabel = new JLabel("Employee Management System", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        mainPanel.add(titleLabel, BorderLayout.NORTH);
-
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(10, 10, 10, 10);
-
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        gbc.anchor = GridBagConstraints.EAST;
-        JLabel usernameLabel = new JLabel("Username:");
-        usernameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        formPanel.add(usernameLabel, gbc);
-
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        JTextField usernameField = new JTextField(30);
-        usernameField.setFont(new Font("Arial", Font.PLAIN, 14));
-        usernameField.setPreferredSize(new Dimension(280, 35));
-        formPanel.add(usernameField, gbc);
-
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        gbc.anchor = GridBagConstraints.EAST;
-        JLabel passwordLabel = new JLabel("Password:");
-        passwordLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        formPanel.add(passwordLabel, gbc);
-
-        gbc.gridx = 1;
-        gbc.anchor = GridBagConstraints.WEST;
-        JPasswordField passwordField = new JPasswordField(30);
-        passwordField.setFont(new Font("Arial", Font.PLAIN, 14));
-        passwordField.setPreferredSize(new Dimension(280, 35));
-        formPanel.add(passwordField, gbc);
-
-        mainPanel.add(formPanel, BorderLayout.CENTER);
-
-        JPanel buttonPanel = new JPanel(new FlowLayout());
-        JButton loginBtn = new JButton("Login");
-        JButton cancelBtn = new JButton("Cancel");
-
-        loginBtn.setPreferredSize(new Dimension(100, 35));
-        cancelBtn.setPreferredSize(new Dimension(100, 35));
-        loginBtn.setFont(new Font("Arial", Font.PLAIN, 14));
-        cancelBtn.setFont(new Font("Arial", Font.PLAIN, 14));
-
-        buttonPanel.add(loginBtn);
-        buttonPanel.add(cancelBtn);
-        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
-
-        final boolean[] loginSuccess = {false};
-
-        loginBtn.addActionListener(e -> {
-            String username = usernameField.getText().trim();
-            String password = new String(passwordField.getPassword()).trim();
-
-            if ("admin".equals(username) && "admin123".equals(password)) {
-                loginSuccess[0] = true;
-                loginDialog.dispose();
-                JOptionPane.showMessageDialog(
-                        null,
-                        "Login successful!",
-                        "Success",
-                        JOptionPane.INFORMATION_MESSAGE
-                );
-            } else {
-                JOptionPane.showMessageDialog(
-                        loginDialog,
-                        "Invalid username or password!",
-                        "Login Failed",
-                        JOptionPane.ERROR_MESSAGE
-                );
-                passwordField.setText("");
-                usernameField.requestFocus();
-            }
-        });
-
-        cancelBtn.addActionListener(e -> {
-            loginSuccess[0] = false;
-            loginDialog.dispose();
-        });
-
-        loginDialog.getRootPane().setDefaultButton(loginBtn);
-        loginDialog.add(mainPanel);
-        loginDialog.setVisible(true);
-
-        return loginSuccess[0];
     }
 }

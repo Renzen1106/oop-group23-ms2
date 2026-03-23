@@ -1,12 +1,16 @@
 package com.motorph.employeeapp.model;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.Objects;
 
 /**
  * Abstract parent class representing a MotorPH employee.
  * Contains shared personal, employment, and salary-related attributes.
+ *
+ * Polymorphism is implemented through computeMonthlyPay(), where
+ * each employee subtype can override how gross monthly pay is computed.
  */
 public abstract class Employee {
     private final String id;
@@ -50,7 +54,7 @@ public abstract class Employee {
             BigDecimal grossSemiMonthlyRate,
             BigDecimal hourlyRate
     ) {
-        this.id = Objects.requireNonNull(id, "ID must not be null");
+        this.id = requireNonBlank(id, "ID must not be blank");
         setFirstName(firstName);
         setLastName(lastName);
         setBirthDate(birthDate);
@@ -80,7 +84,9 @@ public abstract class Employee {
         );
     }
 
-    // --- Basic identity ---
+    // =========================
+    // Basic identity
+    // =========================
     public String getId() {
         return id;
     }
@@ -90,10 +96,7 @@ public abstract class Employee {
     }
 
     public void setFirstName(String firstName) {
-        if (firstName == null || firstName.isBlank()) {
-            throw new IllegalArgumentException("First name cannot be empty");
-        }
-        this.firstName = firstName.trim();
+        this.firstName = requireNonBlank(firstName, "First name cannot be empty");
     }
 
     public String getLastName() {
@@ -101,10 +104,7 @@ public abstract class Employee {
     }
 
     public void setLastName(String lastName) {
-        if (lastName == null || lastName.isBlank()) {
-            throw new IllegalArgumentException("Last name cannot be empty");
-        }
-        this.lastName = lastName.trim();
+        this.lastName = requireNonBlank(lastName, "Last name cannot be empty");
     }
 
     public String getFullName() {
@@ -119,13 +119,15 @@ public abstract class Employee {
         this.birthDate = Objects.requireNonNull(birthDate, "Birth date must not be null");
     }
 
-    // --- Contact & government IDs ---
+    // =========================
+    // Contact & government IDs
+    // =========================
     public String getAddress() {
         return address;
     }
 
     public void setAddress(String address) {
-        this.address = address == null ? "" : address.trim();
+        this.address = normalizeNullableText(address);
     }
 
     public String getPhone() {
@@ -133,7 +135,7 @@ public abstract class Employee {
     }
 
     public void setPhone(String phone) {
-        this.phone = phone == null ? "" : phone.trim();
+        this.phone = normalizeNullableText(phone);
     }
 
     public String getSssNumber() {
@@ -141,7 +143,7 @@ public abstract class Employee {
     }
 
     public void setSssNumber(String sssNumber) {
-        this.sssNumber = sssNumber == null ? "" : sssNumber.trim();
+        this.sssNumber = normalizeNullableText(sssNumber);
     }
 
     public String getPhilHealthNumber() {
@@ -149,7 +151,7 @@ public abstract class Employee {
     }
 
     public void setPhilHealthNumber(String philHealthNumber) {
-        this.philHealthNumber = philHealthNumber == null ? "" : philHealthNumber.trim();
+        this.philHealthNumber = normalizeNullableText(philHealthNumber);
     }
 
     public String getTinNumber() {
@@ -157,7 +159,7 @@ public abstract class Employee {
     }
 
     public void setTinNumber(String tinNumber) {
-        this.tinNumber = tinNumber == null ? "" : tinNumber.trim();
+        this.tinNumber = normalizeNullableText(tinNumber);
     }
 
     public String getPagIbigNumber() {
@@ -165,16 +167,18 @@ public abstract class Employee {
     }
 
     public void setPagIbigNumber(String pagIbigNumber) {
-        this.pagIbigNumber = pagIbigNumber == null ? "" : pagIbigNumber.trim();
+        this.pagIbigNumber = normalizeNullableText(pagIbigNumber);
     }
 
-    // --- Employment info ---
+    // =========================
+    // Employment info
+    // =========================
     public String getStatus() {
         return status;
     }
 
     public void setStatus(String status) {
-        this.status = status == null ? "" : status.trim();
+        this.status = normalizeNullableText(status);
     }
 
     public String getPosition() {
@@ -182,7 +186,7 @@ public abstract class Employee {
     }
 
     public void setPosition(String position) {
-        this.position = position == null ? "" : position.trim();
+        this.position = normalizeNullableText(position);
     }
 
     public String getSupervisor() {
@@ -190,16 +194,18 @@ public abstract class Employee {
     }
 
     public void setSupervisor(String supervisor) {
-        this.supervisor = supervisor == null ? "" : supervisor.trim();
+        this.supervisor = normalizeNullableText(supervisor);
     }
 
-    // --- Salary fields ---
+    // =========================
+    // Salary fields
+    // =========================
     public BigDecimal getBasicSalary() {
         return basicSalary;
     }
 
     public void setBasicSalary(BigDecimal basicSalary) {
-        this.basicSalary = Objects.requireNonNull(basicSalary, "Basic salary must not be null");
+        this.basicSalary = validateMoney(basicSalary, "Basic salary must not be null");
     }
 
     public BigDecimal getRiceSubsidy() {
@@ -207,7 +213,7 @@ public abstract class Employee {
     }
 
     public void setRiceSubsidy(BigDecimal riceSubsidy) {
-        this.riceSubsidy = Objects.requireNonNull(riceSubsidy, "Rice subsidy must not be null");
+        this.riceSubsidy = validateMoney(riceSubsidy, "Rice subsidy must not be null");
     }
 
     public BigDecimal getPhoneAllowance() {
@@ -215,7 +221,7 @@ public abstract class Employee {
     }
 
     public void setPhoneAllowance(BigDecimal phoneAllowance) {
-        this.phoneAllowance = Objects.requireNonNull(phoneAllowance, "Phone allowance must not be null");
+        this.phoneAllowance = validateMoney(phoneAllowance, "Phone allowance must not be null");
     }
 
     public BigDecimal getClothingAllowance() {
@@ -223,7 +229,7 @@ public abstract class Employee {
     }
 
     public void setClothingAllowance(BigDecimal clothingAllowance) {
-        this.clothingAllowance = Objects.requireNonNull(clothingAllowance, "Clothing allowance must not be null");
+        this.clothingAllowance = validateMoney(clothingAllowance, "Clothing allowance must not be null");
     }
 
     public BigDecimal getGrossSemiMonthlyRate() {
@@ -231,7 +237,7 @@ public abstract class Employee {
     }
 
     public void setGrossSemiMonthlyRate(BigDecimal grossSemiMonthlyRate) {
-        this.grossSemiMonthlyRate = Objects.requireNonNull(grossSemiMonthlyRate, "Gross semi-monthly rate must not be null");
+        this.grossSemiMonthlyRate = validateMoney(grossSemiMonthlyRate, "Gross semi-monthly rate must not be null");
     }
 
     public BigDecimal getHourlyRate() {
@@ -239,17 +245,30 @@ public abstract class Employee {
     }
 
     public void setHourlyRate(BigDecimal hourlyRate) {
-        this.hourlyRate = Objects.requireNonNull(hourlyRate, "Hourly rate must not be null");
+        this.hourlyRate = validateMoney(hourlyRate, "Hourly rate must not be null");
     }
 
-    // --- Abstract payroll behaviors ---
-    public abstract BigDecimal calculateGrossPay();
+    // =========================
+    // Shared payroll helpers
+    // =========================
+    public BigDecimal computeBaseMonthlyPay() {
+        return grossSemiMonthlyRate
+                .multiply(BigDecimal.valueOf(2))
+                .setScale(2, RoundingMode.HALF_UP);
+    }
 
-    public abstract BigDecimal calculateAllowances();
+    public BigDecimal computeStandardAllowances() {
+        return riceSubsidy
+                .add(phoneAllowance)
+                .add(clothingAllowance)
+                .setScale(2, RoundingMode.HALF_UP);
+    }
 
-    public abstract BigDecimal calculateDeductions();
-
-    public abstract BigDecimal calculateNetPay();
+    /**
+     * Polymorphic payroll behavior.
+     * Each employee subtype must define how monthly pay is computed.
+     */
+    public abstract BigDecimal computeMonthlyPay();
 
     @Override
     public String toString() {
@@ -261,8 +280,12 @@ public abstract class Employee {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Employee)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof Employee)) {
+            return false;
+        }
         Employee employee = (Employee) o;
         return id.equals(employee.id);
     }
@@ -270,5 +293,26 @@ public abstract class Employee {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    private String requireNonBlank(String value, String message) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalArgumentException(message);
+        }
+        return value.trim();
+    }
+
+    private String normalizeNullableText(String value) {
+        return value == null ? "" : value.trim();
+    }
+
+    private BigDecimal validateMoney(BigDecimal value, String nullMessage) {
+        Objects.requireNonNull(value, nullMessage);
+
+        if (value.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Money values cannot be negative");
+        }
+
+        return value.setScale(2, RoundingMode.HALF_UP);
     }
 }

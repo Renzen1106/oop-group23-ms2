@@ -8,27 +8,23 @@ import java.time.YearMonth;
 
 /**
  * Handles payroll-related business logic such as
- * earnings, deductions, and net pay computation.
+ * deductions and net pay computation.
+ *
+ * Polymorphism is implemented through Employee.computeMonthlyPay(),
+ * where each employee subtype can define its own pay computation.
  */
 public class PayrollService {
 
     /**
-     * Computes the employee's gross monthly pay.
-     * Formula: semi-monthly rate × 2 + allowances
+     * Computes the employee's gross monthly pay using polymorphism.
+     * The actual computation is delegated to the employee subtype.
      */
     public BigDecimal computeMonthlyPay(Employee emp, YearMonth ym) {
-        if (emp == null) {
-            throw new IllegalArgumentException("Employee must not be null");
-        }
+        validateEmployee(emp);
 
-        BigDecimal grossMonthly = emp.getGrossSemiMonthlyRate()
-                .multiply(BigDecimal.valueOf(2));
+        BigDecimal grossMonthly = emp.computeMonthlyPay();
 
-        return grossMonthly
-                .add(emp.getRiceSubsidy())
-                .add(emp.getPhoneAllowance())
-                .add(emp.getClothingAllowance())
-                .setScale(2, RoundingMode.HALF_UP);
+        return normalize(grossMonthly);
     }
 
     /**
@@ -36,8 +32,8 @@ public class PayrollService {
      */
     public BigDecimal computeSssDeduction(BigDecimal grossMonthly) {
         validateAmount(grossMonthly);
-        return grossMonthly.multiply(new BigDecimal("0.04"))
-                .setScale(2, RoundingMode.HALF_UP);
+
+        return normalize(grossMonthly.multiply(new BigDecimal("0.04")));
     }
 
     /**
@@ -45,8 +41,8 @@ public class PayrollService {
      */
     public BigDecimal computePhilHealthDeduction(BigDecimal grossMonthly) {
         validateAmount(grossMonthly);
-        return grossMonthly.multiply(new BigDecimal("0.0275"))
-                .setScale(2, RoundingMode.HALF_UP);
+
+        return normalize(grossMonthly.multiply(new BigDecimal("0.0275")));
     }
 
     /**
@@ -54,8 +50,8 @@ public class PayrollService {
      */
     public BigDecimal computePagIbigDeduction(BigDecimal grossMonthly) {
         validateAmount(grossMonthly);
-        return grossMonthly.multiply(new BigDecimal("0.02"))
-                .setScale(2, RoundingMode.HALF_UP);
+
+        return normalize(grossMonthly.multiply(new BigDecimal("0.02")));
     }
 
     /**
@@ -77,41 +73,61 @@ public class PayrollService {
                 .subtract(philHealth)
                 .subtract(pagIbig);
 
-        return taxableIncome.multiply(new BigDecimal("0.10"))
-                .setScale(2, RoundingMode.HALF_UP);
+        if (taxableIncome.compareTo(BigDecimal.ZERO) < 0) {
+            taxableIncome = BigDecimal.ZERO;
+        }
+
+        return normalize(taxableIncome.multiply(new BigDecimal("0.10")));
     }
 
     /**
      * Computes total mandatory deductions.
      */
     public BigDecimal computeTotalDeductions(Employee emp, YearMonth ym) {
-        BigDecimal grossMonthly = computeMonthlyPay(emp, ym);
+        validateEmployee(emp);
 
+        BigDecimal grossMonthly = computeMonthlyPay(emp, ym);
         BigDecimal sss = computeSssDeduction(grossMonthly);
         BigDecimal philHealth = computePhilHealthDeduction(grossMonthly);
         BigDecimal pagIbig = computePagIbigDeduction(grossMonthly);
         BigDecimal withholdingTax = computeWithholdingTax(grossMonthly, sss, philHealth, pagIbig);
 
-        return sss.add(philHealth)
-                .add(pagIbig)
-                .add(withholdingTax)
-                .setScale(2, RoundingMode.HALF_UP);
+        return normalize(
+                sss.add(philHealth)
+                   .add(pagIbig)
+                   .add(withholdingTax)
+        );
     }
 
     /**
      * Computes net monthly pay.
      */
     public BigDecimal computeNetMonthlyPay(Employee emp, YearMonth ym) {
+        validateEmployee(emp);
+
         BigDecimal grossMonthly = computeMonthlyPay(emp, ym);
         BigDecimal totalDeductions = computeTotalDeductions(emp, ym);
 
-        return grossMonthly.subtract(totalDeductions)
-                .setScale(2, RoundingMode.HALF_UP);
+        return normalize(grossMonthly.subtract(totalDeductions));
+    }
+
+    private void validateEmployee(Employee emp) {
+        if (emp == null) {
+            throw new IllegalArgumentException("Employee must not be null");
+        }
     }
 
     private void validateAmount(BigDecimal amount) {
         if (amount == null) {
             throw new IllegalArgumentException("Amount must not be null");
         }
+
+        if (amount.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException("Amount must not be negative");
+        }
+    }
+
+    private BigDecimal normalize(BigDecimal value) {
+        return value.setScale(2, RoundingMode.HALF_UP);
     }
 }

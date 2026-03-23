@@ -1,12 +1,13 @@
 package com.motorph.employeeapp.service;
 
+import com.motorph.employeeapp.model.UserAccount;
 import com.motorph.employeeapp.repository.UserAccountDAO;
 
 import java.io.IOException;
 import java.util.Map;
 
 /**
- * Handles login validation logic.
+ * Handles login validation and returns authenticated user.
  */
 public class LoginService {
 
@@ -16,16 +17,21 @@ public class LoginService {
         this.userAccountDAO = userAccountDAO;
     }
 
-    public boolean validateLogin(String username, String password) {
+    public UserAccount authenticate(String username, String password) {
 
         try {
-            Map<String, String> accounts = userAccountDAO.loadAccounts();
-            return password.equals(accounts.get(username));
+            Map<String, UserAccount> accounts = userAccountDAO.loadAccounts();
+
+            UserAccount user = accounts.get(username);
+
+            if (user != null && user.getPassword().equals(password)) {
+                return user;
+            }
 
         } catch (IOException e) {
-
             System.err.println("Error reading account data: " + e.getMessage());
-            return false;
         }
+
+        return null;
     }
 }

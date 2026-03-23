@@ -5,7 +5,7 @@ import java.time.LocalDate;
 
 /**
  * Represents a regular full-time employee.
- * Implements payroll calculations for regular employees.
+ * Regular employees receive FULL allowances.
  */
 public class RegularEmployee extends Employee {
 
@@ -36,40 +36,11 @@ public class RegularEmployee extends Employee {
     }
 
     /**
-     * Gross pay for regular employees.
+     * Regular employees receive full base pay + full allowances.
      */
     @Override
-    public BigDecimal calculateGrossPay() {
-        return getBasicSalary()
-                .add(getRiceSubsidy())
-                .add(getPhoneAllowance())
-                .add(getClothingAllowance());
-    }
-
-    /**
-     * Total allowances.
-     */
-    @Override
-    public BigDecimal calculateAllowances() {
-        return getRiceSubsidy()
-                .add(getPhoneAllowance())
-                .add(getClothingAllowance());
-    }
-
-    /**
-     * Placeholder deduction logic.
-     * You can later integrate SSS, PhilHealth, Pag-IBIG, tax, etc.
-     */
-    @Override
-    public BigDecimal calculateDeductions() {
-        return BigDecimal.ZERO;
-    }
-
-    /**
-     * Net pay = gross pay − deductions.
-     */
-    @Override
-    public BigDecimal calculateNetPay() {
-        return calculateGrossPay().subtract(calculateDeductions());
+    public BigDecimal computeMonthlyPay() {
+        return computeBaseMonthlyPay()
+                .add(computeStandardAllowances());
     }
 }

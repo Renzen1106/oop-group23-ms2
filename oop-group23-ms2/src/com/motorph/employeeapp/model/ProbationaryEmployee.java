@@ -5,9 +5,11 @@ import java.time.LocalDate;
 
 /**
  * Represents a probationary employee.
- * Payroll logic can differ slightly from regular employees.
+ * Probationary employees receive REDUCED allowances.
  */
 public class ProbationaryEmployee extends Employee {
+
+    private static final BigDecimal ALLOWANCE_RATE = new BigDecimal("0.50");
 
     public ProbationaryEmployee(
             String id,
@@ -36,40 +38,14 @@ public class ProbationaryEmployee extends Employee {
     }
 
     /**
-     * Gross pay for probationary employees.
+     * Probationary employees receive base pay + 50% allowances.
      */
     @Override
-    public BigDecimal calculateGrossPay() {
-        return getBasicSalary()
-                .add(getRiceSubsidy())
-                .add(getPhoneAllowance())
-                .add(getClothingAllowance());
-    }
+    public BigDecimal computeMonthlyPay() {
+        BigDecimal reducedAllowances = computeStandardAllowances()
+                .multiply(ALLOWANCE_RATE);
 
-    /**
-     * Allowances.
-     */
-    @Override
-    public BigDecimal calculateAllowances() {
-        return getRiceSubsidy()
-                .add(getPhoneAllowance())
-                .add(getClothingAllowance());
-    }
-
-    /**
-     * Probationary employees may have slightly different deductions.
-     * For now we keep it simple.
-     */
-    @Override
-    public BigDecimal calculateDeductions() {
-        return BigDecimal.ZERO;
-    }
-
-    /**
-     * Net pay calculation.
-     */
-    @Override
-    public BigDecimal calculateNetPay() {
-        return calculateGrossPay().subtract(calculateDeductions());
+        return computeBaseMonthlyPay()
+                .add(reducedAllowances);
     }
 }
