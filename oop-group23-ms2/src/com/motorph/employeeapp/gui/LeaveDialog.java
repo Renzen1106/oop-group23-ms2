@@ -8,8 +8,6 @@ import com.motorph.employeeapp.service.LeaveService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.LocalDate;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class LeaveDialog extends JDialog {
@@ -122,8 +120,6 @@ public class LeaveDialog extends JDialog {
 
     private void handleSubmitLeave() {
         try {
-            validateSubmitInputs();
-
             leaveService.submitLeave(
                     Integer.parseInt(leaveIdField.getText().trim()),
                     Integer.parseInt(employeeIdField.getText().trim()),
@@ -189,45 +185,6 @@ public class LeaveDialog extends JDialog {
                     "Leave Validation Error",
                     JOptionPane.ERROR_MESSAGE
             );
-        }
-    }
-
-    private void validateSubmitInputs() {
-        validateNumericField(leaveIdField.getText(), "Leave ID");
-        validateNumericField(employeeIdField.getText(), "Employee ID");
-        validateRequiredField(leaveTypeField.getText(), "Leave Type");
-        validateDateField(startDateField.getText(), "Start Date");
-        validateDateField(endDateField.getText(), "End Date");
-
-        LocalDate startDate = LocalDate.parse(startDateField.getText().trim());
-        LocalDate endDate = LocalDate.parse(endDateField.getText().trim());
-
-        if (endDate.isBefore(startDate)) {
-            throw new IllegalArgumentException("End Date cannot be earlier than Start Date.");
-        }
-    }
-
-    private void validateRequiredField(String value, String fieldName) {
-        if (value == null || value.trim().isEmpty()) {
-            throw new IllegalArgumentException(fieldName + " is required.");
-        }
-    }
-
-    private void validateNumericField(String value, String fieldName) {
-        validateRequiredField(value, fieldName);
-
-        if (!value.trim().matches("\\d+")) {
-            throw new IllegalArgumentException(fieldName + " must contain digits only.");
-        }
-    }
-
-    private void validateDateField(String value, String fieldName) {
-        validateRequiredField(value, fieldName);
-
-        try {
-            LocalDate.parse(value.trim());
-        } catch (DateTimeParseException ex) {
-            throw new IllegalArgumentException(fieldName + " must follow YYYY-MM-DD format.");
         }
     }
 

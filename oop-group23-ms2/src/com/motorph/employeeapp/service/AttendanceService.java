@@ -3,6 +3,9 @@ package com.motorph.employeeapp.service;
 import com.motorph.employeeapp.model.AttendanceRecord;
 import com.motorph.employeeapp.repository.AttendanceDAO;
 
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,28 +18,19 @@ public class AttendanceService {
     }
 
     public void timeIn(String employeeId, String date, String timeIn) {
-        validateRequired(employeeId, "Employee ID");
-        validateRequired(date, "Date");
-        validateRequired(timeIn, "Time In");
+        validateEmployeeId(employeeId);
+        validateDate(date);
+        validateTime(timeIn, "Time In");
 
         List<AttendanceRecord> records = attendanceDAO.getAllAttendance();
 
         for (AttendanceRecord record : records) {
-            if (record.getEmployeeId().equals(employeeId)
-                    && record.getDate().equals(date)
-                    && record.getTimeOut() != null
-                    && !record.getTimeOut().isBlank()) {
-                throw new IllegalArgumentException(
-                        "Attendance already completed for this employee on this date."
-                );
-            }
+            boolean sameEmployee = record.getEmployeeId().equals(employeeId);
+            boolean sameDate = record.getDate().equals(date);
+            boolean noTimeOutYet = record.getTimeOut() == null || record.getTimeOut().isBlank();
 
-            if (record.getEmployeeId().equals(employeeId)
-                    && record.getDate().equals(date)
-                    && (record.getTimeOut() == null || record.getTimeOut().isBlank())) {
-                throw new IllegalArgumentException(
-                        "Employee already timed in for this date and is still active."
-                );
+            if (sameEmployee && sameDate && noTimeOutYet) {
+                throw new IllegalArgumentException("Employee already has an active time-in record for this date.");
             }
         }
 
@@ -45,9 +39,9 @@ public class AttendanceService {
     }
 
     public void timeOut(String employeeId, String date, String timeOut) {
-        validateRequired(employeeId, "Employee ID");
-        validateRequired(date, "Date");
-        validateRequired(timeOut, "Time Out");
+        validateEmployeeId(employeeId);
+        validateDate(date);
+        validateTime(timeOut, "Time Out");
 
         List<AttendanceRecord> records = attendanceDAO.getAllAttendance();
         boolean updated = false;
@@ -58,6 +52,13 @@ public class AttendanceService {
             boolean noTimeOutYet = record.getTimeOut() == null || record.getTimeOut().isBlank();
 
             if (sameEmployee && sameDate && noTimeOutYet) {
+                LocalTime in = LocalTime.parse(record.getTimeIn().trim());
+                LocalTime out = LocalTime.parse(timeOut.trim());
+
+                if (out.isBefore(in) || out.equals(in)) {
+                    throw new IllegalArgumentException("Time Out must be later than Time In.");
+                }
+
                 record.setTimeOut(timeOut);
                 updated = true;
                 break;
@@ -65,9 +66,7 @@ public class AttendanceService {
         }
 
         if (!updated) {
-            throw new IllegalArgumentException(
-                    "No active time-in record found for this employee on the given date."
-            );
+            throw new IllegalArgumentException("No active time-in record found for this employee on the given date.");
         }
 
         attendanceDAO.overwriteAttendance(records);
@@ -78,7 +77,7 @@ public class AttendanceService {
     }
 
     public List<AttendanceRecord> getAttendanceByEmployee(String employeeId) {
-        validateRequired(employeeId, "Employee ID");
+        validateEmployeeId(employeeId);
 
         List<AttendanceRecord> allRecords = attendanceDAO.getAllAttendance();
         List<AttendanceRecord> filteredRecords = new ArrayList<>();
@@ -92,9 +91,41 @@ public class AttendanceService {
         return filteredRecords;
     }
 
-    private void validateRequired(String value, String fieldName) {
-        if (value == null || value.trim().isEmpty()) {
+    private void validateEmployeeId(String employeeId) {
+        if (employeeId == null || employeeId.trim().isEmpty()) {
+            throw new IllegalArgumentException("Employee ID is required.");
+        }
+
+        if (!employeeId.trim().matches("\\d+")) {
+            throw new IllegalArgumentException("Employee ID must contain digits only.");
+        }
+    }
+
+    private void validateDate(String date) {
+        if (date == null || date.trim().isEmpty()) {
+            throw new IllegalArgumentException("Date is required.");
+        }
+
+        try {
+            LocalDate.parse(date.trim());
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException("Date must follow YYYY-MM-DD format.");
+        }
+    }
+
+    private void validateTime(String time, String fieldName) {
+        if (time == null || time.trim().isEmpty()) {
             throw new IllegalArgumentException(fieldName + " is required.");
+        }
+
+        if (!time.trim().matches("^\\d{2}:\\d{2}$")) {
+            throw new IllegalArgumentException(fieldName + " must follow HH:MM format.");
+        }
+
+        try {
+            LocalTime.parse(time.trim());
+        } catch (DateTimeParseException e) {
+            throw new IllegalArgumentException(fieldName + " must be a valid time.");
         }
     }
 }

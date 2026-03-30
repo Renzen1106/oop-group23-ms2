@@ -6,9 +6,6 @@ import com.motorph.employeeapp.service.AttendanceService;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.time.LocalDate;
-import java.time.LocalTime;
-import java.time.format.DateTimeParseException;
 import java.util.List;
 
 public class AttendanceDialog extends JDialog {
@@ -79,8 +76,6 @@ public class AttendanceDialog extends JDialog {
 
     private void handleTimeIn() {
         try {
-            validateTimeInInputs();
-
             attendanceService.timeIn(
                     employeeIdField.getText().trim(),
                     dateField.getText().trim(),
@@ -103,8 +98,6 @@ public class AttendanceDialog extends JDialog {
 
     private void handleTimeOut() {
         try {
-            validateTimeOutInputs();
-
             attendanceService.timeOut(
                     employeeIdField.getText().trim(),
                     dateField.getText().trim(),
@@ -122,52 +115,6 @@ public class AttendanceDialog extends JDialog {
                     "Attendance Validation Error",
                     JOptionPane.ERROR_MESSAGE
             );
-        }
-    }
-
-    private void validateTimeInInputs() {
-        validateEmployeeId(employeeIdField.getText());
-        validateDate(dateField.getText());
-        validateTime(timeInField.getText(), "Time In");
-    }
-
-    private void validateTimeOutInputs() {
-        validateEmployeeId(employeeIdField.getText());
-        validateDate(dateField.getText());
-        validateTime(timeOutField.getText(), "Time Out");
-    }
-
-    private void validateEmployeeId(String employeeId) {
-        if (employeeId == null || employeeId.trim().isEmpty()) {
-            throw new IllegalArgumentException("Employee ID is required.");
-        }
-
-        if (!employeeId.trim().matches("\\d+")) {
-            throw new IllegalArgumentException("Employee ID must contain digits only.");
-        }
-    }
-
-    private void validateDate(String date) {
-        if (date == null || date.trim().isEmpty()) {
-            throw new IllegalArgumentException("Date is required.");
-        }
-
-        try {
-            LocalDate.parse(date.trim());
-        } catch (DateTimeParseException ex) {
-            throw new IllegalArgumentException("Date must follow YYYY-MM-DD format.");
-        }
-    }
-
-    private void validateTime(String time, String fieldName) {
-        if (time == null || time.trim().isEmpty()) {
-            throw new IllegalArgumentException(fieldName + " is required.");
-        }
-
-        try {
-            LocalTime.parse(time.trim());
-        } catch (DateTimeParseException ex) {
-            throw new IllegalArgumentException(fieldName + " must follow HH:MM format.");
         }
     }
 

@@ -3,73 +3,123 @@ package com.motorph.employeeapp.repository;
 import com.motorph.employeeapp.model.AttendanceRecord;
 
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
 public class AttendanceDAO {
 
-    private static final String FILE_PATH = "data/attendance.csv";
+    private static final String HEADER = "employeeId,date,timeIn,timeOut";
 
-    // Save a new attendance record (Time In)
-    public void saveAttendance(AttendanceRecord record) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
+    private Path resolveFilePath() {
+        String[] possiblePaths = {
+                "data/attendance.csv",
+                "oop-group23-ms2/data/attendance.csv"
+        };
 
-            writer.write(record.toCSV());
-            writer.newLine();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
-
-    // Read all attendance records
-    public List<AttendanceRecord> getAllAttendance() {
-
-        List<AttendanceRecord> records = new ArrayList<>();
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-
-            String line;
-
-            // Skip header row
-            reader.readLine();
-
-            while ((line = reader.readLine()) != null) {
-
-                String[] data = line.split(",");
-
-                AttendanceRecord record = new AttendanceRecord(
-                        data[0],
-                        data[1],
-                        data[2],
-                        data[3]);
-
-                records.add(record);
+        for (String p : possiblePaths) {
+            Path path = Paths.get(p);
+            if (Files.exists(path)) {
+                return path;
             }
-
-        } catch (IOException e) {
-            e.printStackTrace();
         }
 
-        return records;
+        return Paths.get("data/attendance.csv");
     }
 
-    // Overwrite attendance CSV (used when updating timeout)
-    public void overwriteAttendance(List<AttendanceRecord> records) {
+    private void ensureFileExists() throws IOException {
+        Path path = resolveFilePath();
 
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH))) {
+        if (path.getParent() != null && Files.notExists(path.getParent())) {
+            Files.createDirectories(path.getParent());
+        }
 
-            // Write header again
-            writer.write("employeeId,date,timeIn,timeOut");
-            writer.newLine();
+        if (Files.notExists(path) || Files.size(path) == 0) {
+            try (BufferedWriter writer = Files.newBufferedWriter(path)) {
+                writer.write(HEADER);
+                writer.newLine();
+            }
+        }
+    }
 
-            for (AttendanceRecord record : records) {
+    public void saveAttendance(AttendanceRecord record) {
+        try {
+            ensureFileExists();
+            Path path = resolveFilePath();
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile(), true))) {
                 writer.write(record.toCSV());
                 writer.newLine();
             }
 
         } catch (IOException e) {
-            e.printStackTrace();
+            throw new RuntimeException("Failed to save attendance record: " + e.getMessage(), e);
+        }
+    }
+
+    public List<AttendanceRecord> getAllAttendance() {
+        List<AttendanceRecord> records = new ArrayList<>();
+
+        try {
+            ensureFileExists();
+            Path path = resolveFilePath();
+
+            try (BufferedReader reader = new BufferedReader(new FileReader(path.toFile()))) {
+                String line;
+
+                while ((line = reader.readLine()) != null) {
+                    line = line.trim();
+
+                    if (line.isEmpty()) {
+                        continue;
+                    }
+
+                    if (line.equalsIgnoreCase(HEADER) || line.startsWith("employeeId,")) {
+                        continue;
+                    }
+
+                    String[] data = line.split(",", -1);
+                    if (data.length < 4) {
+                        continue;
+                    }
+
+                    AttendanceRecord record = new AttendanceRecord(
+                            data[0].trim(),
+                            data[1].trim(),
+                            data[2].trim(),
+                            data[3].trim()
+                    );
+
+                    records.add(record);
+                }
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to load attendance records: " + e.getMessage(), e);
+        }
+
+        return records;
+    }
+
+    public void overwriteAttendance(List<AttendanceRecord> records) {
+        try {
+            ensureFileExists();
+            Path path = resolveFilePath();
+
+            try (BufferedWriter writer = new BufferedWriter(new FileWriter(path.toFile()))) {
+                writer.write(HEADER);
+                writer.newLine();
+
+                for (AttendanceRecord record : records) {
+                    writer.write(record.toCSV());
+                    writer.newLine();
+                }
+            }
+
+        } catch (IOException e) {
+            throw new RuntimeException("Failed to update attendance records: " + e.getMessage(), e);
         }
     }
 }
