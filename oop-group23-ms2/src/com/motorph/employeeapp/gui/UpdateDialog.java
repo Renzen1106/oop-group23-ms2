@@ -139,50 +139,82 @@ public class UpdateDialog extends JDialog {
             JOptionPane.showMessageDialog(this, "Employee updated successfully.");
             dispose();
 
-            if (onUpdate != null) onUpdate.run();
+            if (onUpdate != null) {
+                onUpdate.run();
+            }
 
         } catch (Exception ex) {
             JOptionPane.showMessageDialog(
                     this,
                     ex.getMessage(),
-                    "Validation Error",
+                    "Input Validation Error",
                     JOptionPane.ERROR_MESSAGE
             );
         }
     }
 
     private void validateInputs() {
-        if (!ValidationUtil.isValidName(lastNameField.getText()))
+        if (!ValidationUtil.isValidName(lastNameField.getText())) {
             throw new IllegalArgumentException("Invalid Last Name.");
+        }
 
-        if (!ValidationUtil.isValidName(firstNameField.getText()))
+        if (!ValidationUtil.isValidName(firstNameField.getText())) {
             throw new IllegalArgumentException("Invalid First Name.");
+        }
 
-        if (!ValidationUtil.isValidAddress(addressField.getText()))
+        if (!ValidationUtil.isValidAddress(addressField.getText())) {
             throw new IllegalArgumentException("Invalid Address.");
+        }
 
-        if (!ValidationUtil.isValidPhone(phoneField.getText()))
+        if (!ValidationUtil.isValidPhone(phoneField.getText())) {
             throw new IllegalArgumentException("Invalid Phone.");
+        }
 
-        if (!ValidationUtil.isValidSSS(sssField.getText()))
+        if (!ValidationUtil.isValidSSS(sssField.getText())) {
             throw new IllegalArgumentException("Invalid SSS.");
+        }
 
-        if (!ValidationUtil.isValidPhilHealth(philHealthField.getText()))
+        if (!ValidationUtil.isValidPhilHealth(philHealthField.getText())) {
             throw new IllegalArgumentException("Invalid PhilHealth.");
+        }
 
-        if (!ValidationUtil.isValidTIN(tinField.getText()))
+        if (!ValidationUtil.isValidTIN(tinField.getText())) {
             throw new IllegalArgumentException("Invalid TIN.");
+        }
 
-        if (!ValidationUtil.isValidPagibig(pagIbigField.getText()))
+        if (!ValidationUtil.isValidPagibig(pagIbigField.getText())) {
             throw new IllegalArgumentException("Invalid Pag-IBIG.");
+        }
+
+        if (!ValidationUtil.isValidStatus((String) statusField.getSelectedItem())) {
+            throw new IllegalArgumentException("Status must be exactly 'Regular' or 'Probationary'.");
+        }
+
+        if (!ValidationUtil.isValidPosition(positionField.getText())) {
+            throw new IllegalArgumentException("Invalid Position.");
+        }
+
+        if (!ValidationUtil.isValidSupervisor(supervisorField.getText())) {
+            throw new IllegalArgumentException("Invalid Supervisor.");
+        }
+
+        if (basicSalaryField.getText().isBlank() ||
+            riceSubsidyField.getText().isBlank() ||
+            phoneAllowanceField.getText().isBlank() ||
+            clothingAllowanceField.getText().isBlank() ||
+            semiMonthlyRateField.getText().isBlank() ||
+            hourlyRateField.getText().isBlank()) {
+            throw new IllegalArgumentException("Salary fields cannot be empty.");
+        }
 
         if (!ValidationUtil.isNumeric(basicSalaryField.getText()) ||
             !ValidationUtil.isNumeric(riceSubsidyField.getText()) ||
             !ValidationUtil.isNumeric(phoneAllowanceField.getText()) ||
             !ValidationUtil.isNumeric(clothingAllowanceField.getText()) ||
             !ValidationUtil.isNumeric(semiMonthlyRateField.getText()) ||
-            !ValidationUtil.isNumeric(hourlyRateField.getText()))
+            !ValidationUtil.isNumeric(hourlyRateField.getText())) {
             throw new IllegalArgumentException("Salary fields must be numeric.");
+        }
     }
 
     private void updateEmployeeFields(LocalDate birthDate) {
@@ -198,12 +230,12 @@ public class UpdateDialog extends JDialog {
         employee.setStatus(statusField.getSelectedItem().toString());
         employee.setPosition(positionField.getText().trim());
         employee.setSupervisor(supervisorField.getText().trim());
-        employee.setBasicSalary(parseDecimal(basicSalaryField.getText()));
-        employee.setRiceSubsidy(parseDecimal(riceSubsidyField.getText()));
-        employee.setPhoneAllowance(parseDecimal(phoneAllowanceField.getText()));
-        employee.setClothingAllowance(parseDecimal(clothingAllowanceField.getText()));
-        employee.setGrossSemiMonthlyRate(parseDecimal(semiMonthlyRateField.getText()));
-        employee.setHourlyRate(parseDecimal(hourlyRateField.getText()));
+        employee.setBasicSalary(parseDecimal(basicSalaryField.getText(), "Basic Salary"));
+        employee.setRiceSubsidy(parseDecimal(riceSubsidyField.getText(), "Rice Subsidy"));
+        employee.setPhoneAllowance(parseDecimal(phoneAllowanceField.getText(), "Phone Allowance"));
+        employee.setClothingAllowance(parseDecimal(clothingAllowanceField.getText(), "Clothing Allowance"));
+        employee.setGrossSemiMonthlyRate(parseDecimal(semiMonthlyRateField.getText(), "Semi-monthly Rate"));
+        employee.setHourlyRate(parseDecimal(hourlyRateField.getText(), "Hourly Rate"));
     }
 
     private LocalDate convertDate(Date dt) {
@@ -212,13 +244,16 @@ public class UpdateDialog extends JDialog {
                 .toLocalDate();
     }
 
-    private BigDecimal parseDecimal(String txt) {
-        if (txt == null || txt.isBlank()) return BigDecimal.ZERO;
+    private BigDecimal parseDecimal(String txt, String fieldName) {
+        if (txt == null || txt.isBlank()) {
+            throw new IllegalArgumentException(fieldName + " cannot be empty.");
+        }
 
-        BigDecimal val = new BigDecimal(txt);
+        BigDecimal val = new BigDecimal(txt.trim());
 
-        if (val.compareTo(BigDecimal.ZERO) < 0)
-            throw new IllegalArgumentException("Values cannot be negative.");
+        if (val.compareTo(BigDecimal.ZERO) < 0) {
+            throw new IllegalArgumentException(fieldName + " cannot be negative.");
+        }
 
         return val;
     }

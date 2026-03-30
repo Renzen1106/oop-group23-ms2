@@ -12,15 +12,7 @@ import java.time.ZoneId;
 import java.util.Date;
 import java.util.List;
 
-import javax.swing.JButton;
-import javax.swing.JDialog;
-import javax.swing.JLabel;
-import javax.swing.JOptionPane;
-import javax.swing.JPanel;
-import javax.swing.JScrollPane;
-import javax.swing.JSpinner;
-import javax.swing.JTextField;
-import javax.swing.SpinnerDateModel;
+import javax.swing.*;
 
 import com.motorph.employeeapp.model.Employee;
 import com.motorph.employeeapp.model.ProbationaryEmployee;
@@ -40,9 +32,9 @@ public class AddRecordDialog extends JDialog {
     private final JTextField addressField = new JTextField(20);
     private final JTextField phoneField = new JTextField(12);
     private final JTextField sssField = new JTextField(12);
-    private final JTextField philHealthField = new JTextField(12);
+    private final JTextField philhealthField = new JTextField(12);
     private final JTextField tinField = new JTextField(12);
-    private final JTextField pagIbigField = new JTextField(12);
+    private final JTextField pagibigField = new JTextField(12);
     private final JTextField statusField = new JTextField(10);
     private final JTextField positionField = new JTextField(15);
     private final JTextField supervisorField = new JTextField(15);
@@ -54,138 +46,99 @@ public class AddRecordDialog extends JDialog {
     private final JTextField hourlyRateField = new JTextField(10);
 
     public AddRecordDialog(Frame owner, EmployeeRepository repo, Runnable onSave) {
-        super(owner, "Add New Employee", true);
+        super(owner, "Add Employee", true);
         this.repo = repo;
         this.onSave = onSave;
 
-        JSpinner.DateEditor de = new JSpinner.DateEditor(birthdaySpinner, "M/d/yyyy");
-        birthdaySpinner.setEditor(de);
+        birthdaySpinner.setEditor(new JSpinner.DateEditor(birthdaySpinner, "MM/dd/yyyy"));
 
         buildForm();
-        pack();
+        setSize(400, 600);
         setLocationRelativeTo(owner);
-
-        idField.setText(nextId());
-        idField.setEditable(false);
-    }
-
-    private String nextId() {
-        try {
-            return repo.loadAll().stream()
-                    .map(Employee::getId)
-                    .map(id -> {
-                        try { return Integer.parseInt(id); }
-                        catch (Exception e) { return 0; }
-                    })
-                    .max(Integer::compareTo)
-                    .map(n -> n + 1)
-                    .orElse(10001)
-                    .toString();
-        } catch (IOException e) {
-            return "10001";
-        }
     }
 
     private void buildForm() {
-        JPanel form = new JPanel(new GridLayout(0, 2, 5, 5));
+        JPanel panel = new JPanel(new GridLayout(0, 2));
 
-        form.add(new JLabel("Employee #:")); form.add(idField);
-        form.add(new JLabel("Last Name:")); form.add(lastNameField);
-        form.add(new JLabel("First Name:")); form.add(firstNameField);
-        form.add(new JLabel("Birthday:")); form.add(birthdaySpinner);
-        form.add(new JLabel("Address:")); form.add(addressField);
-        form.add(new JLabel("Phone:")); form.add(phoneField);
-        form.add(new JLabel("SSS #:")); form.add(sssField);
-        form.add(new JLabel("PhilHealth #:")); form.add(philHealthField);
-        form.add(new JLabel("TIN #:")); form.add(tinField);
-        form.add(new JLabel("Pag-IBIG #:")); form.add(pagIbigField);
-        form.add(new JLabel("Status (Regular/Probationary):")); form.add(statusField);
-        form.add(new JLabel("Position:")); form.add(positionField);
-        form.add(new JLabel("Supervisor:")); form.add(supervisorField);
-        form.add(new JLabel("Basic Salary:")); form.add(basicSalaryField);
-        form.add(new JLabel("Rice Subsidy:")); form.add(riceSubsidyField);
-        form.add(new JLabel("Phone Allowance:")); form.add(phoneAllowanceField);
-        form.add(new JLabel("Clothing Allowance:")); form.add(clothingAllowanceField);
-        form.add(new JLabel("Semi-monthly Rate:")); form.add(semiMonthlyRateField);
-        form.add(new JLabel("Hourly Rate:")); form.add(hourlyRateField);
+        panel.add(new JLabel("Employee ID")); panel.add(idField);
+        panel.add(new JLabel("Last Name")); panel.add(lastNameField);
+        panel.add(new JLabel("First Name")); panel.add(firstNameField);
+        panel.add(new JLabel("Birthday")); panel.add(birthdaySpinner);
+        panel.add(new JLabel("Address")); panel.add(addressField);
+        panel.add(new JLabel("Phone")); panel.add(phoneField);
+        panel.add(new JLabel("SSS")); panel.add(sssField);
+        panel.add(new JLabel("PhilHealth")); panel.add(philhealthField);
+        panel.add(new JLabel("TIN")); panel.add(tinField);
+        panel.add(new JLabel("Pag-IBIG")); panel.add(pagibigField);
+        panel.add(new JLabel("Status")); panel.add(statusField);
+        panel.add(new JLabel("Position")); panel.add(positionField);
+        panel.add(new JLabel("Supervisor")); panel.add(supervisorField);
+        panel.add(new JLabel("Basic Salary")); panel.add(basicSalaryField);
+        panel.add(new JLabel("Rice Subsidy")); panel.add(riceSubsidyField);
+        panel.add(new JLabel("Phone Allowance")); panel.add(phoneAllowanceField);
+        panel.add(new JLabel("Clothing Allowance")); panel.add(clothingAllowanceField);
+        panel.add(new JLabel("Semi Monthly Rate")); panel.add(semiMonthlyRateField);
+        panel.add(new JLabel("Hourly Rate")); panel.add(hourlyRateField);
 
         JButton saveBtn = new JButton("Save");
-        JButton closeBtn = new JButton("Close");
-
         saveBtn.addActionListener(this::onSave);
-        closeBtn.addActionListener(e -> dispose());
 
-        JPanel buttons = new JPanel();
-        buttons.add(saveBtn);
-        buttons.add(closeBtn);
-
-        getContentPane().add(new JScrollPane(form), BorderLayout.CENTER);
-        getContentPane().add(buttons, BorderLayout.SOUTH);
+        add(new JScrollPane(panel), BorderLayout.CENTER);
+        add(saveBtn, BorderLayout.SOUTH);
     }
 
-    private void onSave(ActionEvent ev) {
+    private void onSave(ActionEvent e) {
         try {
             validateInputs();
 
-            LocalDate bday = convertDate((Date) birthdaySpinner.getValue());
+            LocalDate birthDate = convertDate((Date) birthdaySpinner.getValue());
 
-            Employee employee = createEmployee(bday);
-
-            setAdditionalFields(employee);
+            Employee employee = createEmployee(birthDate);
 
             List<Employee> all = repo.loadAll();
             all.add(employee);
             repo.saveAll(all);
 
-            JOptionPane.showMessageDialog(this, "Employee saved successfully.");
+            JOptionPane.showMessageDialog(this, "Employee added successfully.");
             dispose();
 
             if (onSave != null) onSave.run();
 
         } catch (Exception ex) {
-            JOptionPane.showMessageDialog(
-                    this,
-                    ex.getMessage(),
-                    "Validation Error",
-                    JOptionPane.ERROR_MESSAGE
-            );
+            JOptionPane.showMessageDialog(this, ex.getMessage(), "Input Validation Error", JOptionPane.ERROR_MESSAGE);
         }
     }
 
     private void validateInputs() {
-
-        if (!ValidationUtil.isValidName(lastNameField.getText()))
-            throw new IllegalArgumentException("Invalid Last Name.");
-
-        if (!ValidationUtil.isValidName(firstNameField.getText()))
-            throw new IllegalArgumentException("Invalid First Name.");
-
-        if (!ValidationUtil.isValidAddress(addressField.getText()))
-            throw new IllegalArgumentException("Invalid Address.");
+        if (!ValidationUtil.isValidName(firstNameField.getText()) ||
+            !ValidationUtil.isValidName(lastNameField.getText()))
+            throw new IllegalArgumentException("Invalid name format.");
 
         if (!ValidationUtil.isValidPhone(phoneField.getText()))
-            throw new IllegalArgumentException("Invalid Phone.");
+            throw new IllegalArgumentException("Invalid phone number.");
 
         if (!ValidationUtil.isValidSSS(sssField.getText()))
             throw new IllegalArgumentException("Invalid SSS.");
 
-        if (!ValidationUtil.isValidPhilHealth(philHealthField.getText()))
+        if (!ValidationUtil.isValidPhilHealth(philhealthField.getText()))
             throw new IllegalArgumentException("Invalid PhilHealth.");
 
         if (!ValidationUtil.isValidTIN(tinField.getText()))
             throw new IllegalArgumentException("Invalid TIN.");
 
-        if (!ValidationUtil.isValidPagibig(pagIbigField.getText()))
+        if (!ValidationUtil.isValidPagibig(pagibigField.getText()))
             throw new IllegalArgumentException("Invalid Pag-IBIG.");
 
         if (!ValidationUtil.isValidStatus(statusField.getText()))
-            throw new IllegalArgumentException("Status must be Regular or Probationary.");
+            throw new IllegalArgumentException("Status must be 'Regular' or 'Probationary'.");
 
-        if (!ValidationUtil.isValidPosition(positionField.getText()))
-            throw new IllegalArgumentException("Invalid Position.");
-
-        if (!ValidationUtil.isValidSupervisor(supervisorField.getText()))
-            throw new IllegalArgumentException("Invalid Supervisor.");
+        if (basicSalaryField.getText().isBlank() ||
+            riceSubsidyField.getText().isBlank() ||
+            phoneAllowanceField.getText().isBlank() ||
+            clothingAllowanceField.getText().isBlank() ||
+            semiMonthlyRateField.getText().isBlank() ||
+            hourlyRateField.getText().isBlank())
+            throw new IllegalArgumentException("Salary fields cannot be empty.");
 
         if (!ValidationUtil.isNumeric(basicSalaryField.getText()) ||
             !ValidationUtil.isNumeric(riceSubsidyField.getText()) ||
@@ -196,65 +149,47 @@ public class AddRecordDialog extends JDialog {
             throw new IllegalArgumentException("Salary fields must be numeric.");
     }
 
-    private Employee createEmployee(LocalDate bday) {
-
+    private Employee createEmployee(LocalDate birthDate) {
         String status = statusField.getText().trim();
 
         if (status.equalsIgnoreCase("Probationary")) {
             return new ProbationaryEmployee(
-                    idField.getText().trim(),
-                    firstNameField.getText().trim(),
-                    lastNameField.getText().trim(),
-                    bday,
-                    parseDecimal(basicSalaryField.getText()),
-                    parseDecimal(riceSubsidyField.getText()),
-                    parseDecimal(phoneAllowanceField.getText()),
-                    parseDecimal(clothingAllowanceField.getText()),
-                    parseDecimal(semiMonthlyRateField.getText()),
-                    parseDecimal(hourlyRateField.getText())
+                idField.getText(), firstNameField.getText(), lastNameField.getText(),
+                birthDate, parseDecimal(basicSalaryField.getText(), "Basic Salary"),
+                parseDecimal(riceSubsidyField.getText(), "Rice Subsidy"),
+                parseDecimal(phoneAllowanceField.getText(), "Phone Allowance"),
+                parseDecimal(clothingAllowanceField.getText(), "Clothing Allowance"),
+                parseDecimal(semiMonthlyRateField.getText(), "Semi Monthly Rate"),
+                parseDecimal(hourlyRateField.getText(), "Hourly Rate")
             );
         }
 
         return new RegularEmployee(
-                idField.getText().trim(),
-                firstNameField.getText().trim(),
-                lastNameField.getText().trim(),
-                bday,
-                parseDecimal(basicSalaryField.getText()),
-                parseDecimal(riceSubsidyField.getText()),
-                parseDecimal(phoneAllowanceField.getText()),
-                parseDecimal(clothingAllowanceField.getText()),
-                parseDecimal(semiMonthlyRateField.getText()),
-                parseDecimal(hourlyRateField.getText())
+            idField.getText(), firstNameField.getText(), lastNameField.getText(),
+            birthDate, parseDecimal(basicSalaryField.getText(), "Basic Salary"),
+            parseDecimal(riceSubsidyField.getText(), "Rice Subsidy"),
+            parseDecimal(phoneAllowanceField.getText(), "Phone Allowance"),
+            parseDecimal(clothingAllowanceField.getText(), "Clothing Allowance"),
+            parseDecimal(semiMonthlyRateField.getText(), "Semi Monthly Rate"),
+            parseDecimal(hourlyRateField.getText(), "Hourly Rate")
         );
     }
 
-    private void setAdditionalFields(Employee e) {
-        e.setAddress(addressField.getText().trim());
-        e.setPhone(phoneField.getText().trim());
-        e.setSssNumber(sssField.getText().trim());
-        e.setPhilHealthNumber(philHealthField.getText().trim());
-        e.setTinNumber(tinField.getText().trim());
-        e.setPagIbigNumber(pagIbigField.getText().trim());
-        e.setStatus(statusField.getText().trim());
-        e.setPosition(positionField.getText().trim());
-        e.setSupervisor(supervisorField.getText().trim());
-    }
-
-    private LocalDate convertDate(Date dt) {
-        return Instant.ofEpochMilli(dt.getTime())
+    private LocalDate convertDate(Date date) {
+        return Instant.ofEpochMilli(date.getTime())
                 .atZone(ZoneId.systemDefault())
                 .toLocalDate();
     }
 
-    private BigDecimal parseDecimal(String txt) {
-        if (txt == null || txt.isBlank()) return BigDecimal.ZERO;
+    private BigDecimal parseDecimal(String text, String fieldName) {
+        if (text == null || text.isBlank())
+            throw new IllegalArgumentException(fieldName + " cannot be empty.");
 
-        BigDecimal val = new BigDecimal(txt);
+        BigDecimal value = new BigDecimal(text);
 
-        if (val.compareTo(BigDecimal.ZERO) < 0)
-            throw new IllegalArgumentException("Values cannot be negative.");
+        if (value.compareTo(BigDecimal.ZERO) < 0)
+            throw new IllegalArgumentException(fieldName + " cannot be negative.");
 
-        return val;
+        return value;
     }
 }

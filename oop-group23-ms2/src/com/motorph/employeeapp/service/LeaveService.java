@@ -3,36 +3,71 @@ package com.motorph.employeeapp.service;
 import com.motorph.employeeapp.model.LeaveRequest;
 import com.motorph.employeeapp.repository.LeaveRequestDAO;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class LeaveService {
 
-    private LeaveRequestDAO leaveDAO = new LeaveRequestDAO();
+    private final LeaveRequestDAO leaveDAO;
 
-    public void submitLeave(int leaveId, int employeeId,
-                            String type, String startDate, String endDate) {
+    public LeaveService() {
+        this.leaveDAO = new LeaveRequestDAO();
+    }
+
+    // Submit new leave request
+    public void submitLeave(int leaveId, int employeeId, String leaveType,
+                           String startDate, String endDate) {
+
+        validateRequired(leaveType, "Leave Type");
+        validateRequired(startDate, "Start Date");
+        validateRequired(endDate, "End Date");
 
         LeaveRequest leave = new LeaveRequest(
                 leaveId,
                 employeeId,
-                type,
+                leaveType,
                 startDate,
                 endDate,
-                "PENDING"
+                "Pending"
         );
 
         leaveDAO.saveLeave(leave);
     }
 
+    // Approve leave
     public void approveLeave(int leaveId) {
-        leaveDAO.updateLeaveStatus(leaveId, "APPROVED");
+        leaveDAO.updateLeaveStatus(leaveId, "Approved");
     }
 
+    // Reject leave
     public void rejectLeave(int leaveId) {
-        leaveDAO.updateLeaveStatus(leaveId, "REJECTED");
+        leaveDAO.updateLeaveStatus(leaveId, "Rejected");
     }
 
-    public List<LeaveRequest> viewLeaveHistory() {
+    // Get all leaves
+    public List<LeaveRequest> getAllLeaves() {
         return leaveDAO.getAllLeaves();
+    }
+
+    // Get leaves by employee
+    public List<LeaveRequest> getLeavesByEmployee(int employeeId) {
+
+        List<LeaveRequest> allLeaves = leaveDAO.getAllLeaves();
+        List<LeaveRequest> filtered = new ArrayList<>();
+
+        for (LeaveRequest leave : allLeaves) {
+            if (leave.getEmployeeId() == employeeId) {
+                filtered.add(leave);
+            }
+        }
+
+        return filtered;
+    }
+
+    // Simple validation
+    private void validateRequired(String value, String fieldName) {
+        if (value == null || value.trim().isEmpty()) {
+            throw new IllegalArgumentException(fieldName + " is required.");
+        }
     }
 }

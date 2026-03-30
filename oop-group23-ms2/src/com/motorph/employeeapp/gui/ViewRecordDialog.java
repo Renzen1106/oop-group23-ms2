@@ -84,7 +84,7 @@ public class ViewRecordDialog extends JDialog {
         // Close button
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         JButton closeBtn = new JButton("Close");
-        closeBtn.addActionListener(_ -> dispose());
+        closeBtn.addActionListener(e -> dispose());
         buttons.add(closeBtn);
 
         add(new JScrollPane(form), BorderLayout.CENTER);
